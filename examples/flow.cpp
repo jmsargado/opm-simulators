@@ -43,6 +43,37 @@
 #include <dune/common/parallel/mpihelper.hh>
 #endif
 
+#ifndef FLOW_SINGLE_PURPOSE
+#define ENABLE_FLOW_TWOPHASE 1
+#define ENABLE_FLOW_POLYMER 1
+#define ENABLE_FLOW_SOLVENT 1
+#define ENABLE_FLOW_ENERGY 1
+#define ENABLE_FLOW_BLACKOIL 1
+#endif
+
+#if ENABLE_FLOW_TWOPHASE
+#include <opm/simulators/flow_ebos_gasoil.cpp>
+#include <opm/simulators/flow_ebos_oilwater.cpp>
+#endif
+
+#if ENABLE_FLOW_POLYMER
+#include <opm/simulators/flow_ebos_polymer.cpp>
+#include <opm/simulators/flow_ebos_oilwater_polymer.cpp>
+#endif
+
+#if ENABLE_FLOW_SOLVENT
+#include <opm/simulators/flow_ebos_solvent.cpp>
+#endif
+
+#if ENABLE_FLOW_ENERGY
+#include <opm/simulators/flow_ebos_energy.cpp>
+#endif
+
+#if ENABLE_FLOW_BLACKOIL
+#include <opm/simulators/flow_ebos_blackoil.cpp>
+#endif
+
+
 namespace detail
 {
     boost::filesystem::path simulationCaseName( const std::string& casename ) {
@@ -147,7 +178,10 @@ int main(int argc, char** argv)
         std::shared_ptr<Opm::Schedule> schedule = std::make_shared<Opm::Schedule>(*deck, eclipseState->getInputGrid(), eclipseState->get3DProperties(), phases, parseContext);
         std::shared_ptr<Opm::SummaryConfig> summary_config = std::make_shared<Opm::SummaryConfig>(*deck, *schedule, eclipseState->getTableManager(), parseContext);
                 // Twophase cases
-        if( phases.size() == 2 ) {
+        if( false )
+        {}
+#if ENABLE_FLOW_TWOPHASE
+        else if( phases.size() == 2 ) {
             // oil-gas
             if (phases.active( Opm::Phase::GAS ))
             {
@@ -166,6 +200,8 @@ int main(int argc, char** argv)
                 return EXIT_FAILURE;
             }
         }
+#endif
+#if ENABLE_FLOW_POLYMER
         // Polymer case
         else if ( phases.active( Opm::Phase::POLYMER ) ) {
 
@@ -184,21 +220,28 @@ int main(int argc, char** argv)
                 return Opm::flowEbosPolymerMain(argc, argv);
             }
         }
+#endif
+#if ENABLE_FLOW_SOLVENT
         // Solvent case
         else if ( phases.active( Opm::Phase::SOLVENT ) ) {
             Opm::flowEbosSolventSetDeck(*deck, *eclipseState, *schedule, *summary_config);
             return Opm::flowEbosSolventMain(argc, argv);
         }
+#endif
+#if ENABLE_FLOW_ENERGY
         // Energy case
         else if ( phases.active( Opm::Phase::ENERGY ) ) {
             Opm::flowEbosEnergySetDeck(*deck, *eclipseState, *schedule, *summary_config);
             return Opm::flowEbosEnergyMain(argc, argv);
         }
+#endif
+#if ENABLE_FLOW_BLACKOIL
         // Blackoil case
         else if( phases.size() == 3 ) {
             Opm::flowEbosBlackoilSetDeck(*deck, *eclipseState, *schedule, *summary_config);
             return Opm::flowEbosBlackoilMain(argc, argv);
         }
+#endif
         else
         {
             if (outputCout)
