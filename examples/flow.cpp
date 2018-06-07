@@ -20,6 +20,10 @@
 */
 #include "config.h"
 
+#if HAVE_DUNE_FEM
+#define USE_DUNE_FEM_SOLVERS 1
+#endif
+
 #include <opm/simulators/flow_ebos_blackoil.hpp>
 #include <opm/simulators/flow_ebos_gasoil.hpp>
 #include <opm/simulators/flow_ebos_oilwater.hpp>

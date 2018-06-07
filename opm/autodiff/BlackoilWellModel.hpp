@@ -75,6 +75,7 @@ namespace Opm {
             typedef typename GET_PROP_TYPE(TypeTag, Indices)             Indices;
             typedef typename GET_PROP_TYPE(TypeTag, Simulator)           Simulator;
             typedef typename GET_PROP_TYPE(TypeTag, Scalar)              Scalar;
+            typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix)      JacobianMatrix;
 
             static const int numEq = Indices::numEq;
             static const int solventSaturationIdx = Indices::solventSaturationIdx;
@@ -153,7 +154,7 @@ namespace Opm {
             const SimulatorReport& lastReport() const;
 
 
-            void addWellContributions(Mat& mat)
+            void addWellContributions(JacobianMatrix& mat)
             {
                 for ( const auto& well: well_container_ ) {
                         well->addWellContributions(mat);

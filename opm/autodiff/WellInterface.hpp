@@ -78,9 +78,10 @@ namespace Opm
         typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
         typedef typename GET_PROP_TYPE(TypeTag, IntensiveQuantities) IntensiveQuantities;
         typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
+        typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
+        typedef typename GET_PROP_TYPE(TypeTag, Scalar)         Scalar;
 
         static const int numEq = Indices::numEq;
-        typedef double Scalar;
 
         typedef Dune::FieldVector<Scalar, numEq    > VectorBlockType;
         typedef Dune::FieldMatrix<Scalar, numEq, numEq > MatrixBlockType;
@@ -214,7 +215,7 @@ namespace Opm
         void calculateReservoirRates(WellState& well_state) const;
 
         // Add well contributions to matrix
-        virtual void addWellContributions(Mat&) const
+        virtual void addWellContributions(JacobianMatrix&) const
         {}
     protected:
 

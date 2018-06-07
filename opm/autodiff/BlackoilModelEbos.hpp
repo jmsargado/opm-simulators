@@ -111,6 +111,8 @@ namespace Opm {
         typedef typename GET_PROP_TYPE(TypeTag, Indices)           Indices;
         typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)       MaterialLaw;
         typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
+        typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix)    JacobianMatrix;
+        typedef typename GET_PROP_TYPE(TypeTag, LinearSolverBackend) LinearSolverBackend;
 
         typedef double Scalar;
         static const int numEq = Indices::numEq;
@@ -122,7 +124,8 @@ namespace Opm {
         static const int temperatureIdx = Indices::temperatureIdx;
 
         typedef Dune::FieldVector<Scalar, numEq >        VectorBlockType;
-        typedef Dune::FieldMatrix<Scalar, numEq, numEq >        MatrixBlockType;
+        typedef Dune::FieldMatrix<Scalar, numEq, numEq > MatrixBlockType;
+
         typedef Dune::BCRSMatrix <MatrixBlockType>      Mat;
         typedef Dune::BlockVector<VectorBlockType>      BVector;
 
@@ -151,6 +154,7 @@ namespace Opm {
         : ebosSimulator_(ebosSimulator)
         , grid_(ebosSimulator_.vanguard().grid())
         , istlSolver_( dynamic_cast< const ISTLSolverType* > (&linsolver) )
+        , linearSolver_(ebosSimulator)
         , phaseUsage_(phaseUsageFromDeck(eclState()))
         , has_disgas_(FluidSystem::enableDissolvedGas())
         , has_vapoil_(FluidSystem::enableVaporizedOil())
@@ -284,13 +288,13 @@ namespace Opm {
                 BVector x(nc);
 
                 try {
-                    solveJacobianSystem(x);
+                    solveJacobianSystemEbos(x);
                     report.linear_solve_time += perfTimer.stop();
-                    report.total_linear_iterations += linearIterationsLastSolve();
+                    report.total_linear_iterations += linearIterationsLastSolveEbos();
                 }
                 catch (...) {
                     report.linear_solve_time += perfTimer.stop();
-                    report.total_linear_iterations += linearIterationsLastSolve();
+                    report.total_linear_iterations += linearIterationsLastSolveEbos();
 
                     failureReport_ += report;
                     throw; // re-throw up
@@ -369,7 +373,7 @@ namespace Opm {
             ebosSimulator_.problem().beginIteration();
             ebosSimulator_.model().linearizer().linearize();
             ebosSimulator_.problem().endIteration();
-            
+
             // -------- Aquifer models ----------
             try
             {
@@ -401,11 +405,13 @@ namespace Opm {
             if (param_.matrix_add_well_contributions_) {
                 wellModel().addWellContributions(ebosJac);
             }
+            /*
             if ( param_.preconditioner_add_well_contributions_ &&
                  ! param_.matrix_add_well_contributions_ ) {
                 matrix_for_preconditioner_ .reset(new Mat(ebosJac));
                 wellModel().addWellContributions(*matrix_for_preconditioner_);
             }
+            */
 
             return wellModel().lastReport();
         }
@@ -495,6 +501,12 @@ namespace Opm {
             return istlSolver().iterations();
         }
 
+        /// Number of linear iterations used in last call to solveJacobianSystem().
+        int linearIterationsLastSolveEbos() const
+        {
+            return linearSolver_.iterations();
+        }
+
         /// Solve the Jacobian system Jx = r where J is the Jacobian and
         /// r is the residual.
         void solveJacobianSystem(BVector& x) const
@@ -533,6 +545,38 @@ namespace Opm {
                 Operator opA(ebosJac, actual_mat_for_prec, wellModel());
                 istlSolver().solve( opA, x, ebosResid );
             }
+        }
+
+        /// Solve the Jacobian system Jx = r where J is the Jacobian and
+        /// r is the residual.
+        void solveJacobianSystemEbos(BVector& x)
+        {
+            const auto& ebosJac = ebosSimulator_.model().linearizer().matrix();
+            auto& b = ebosSimulator_.model().linearizer().residual();
+
+            // J = [A, B; C, D], where A is the reservoir equations, B and C the interaction of well
+            // with the reservoir and D is the wells itself.
+            // The full system is reduced to a number of cells X number of cells system via Schur complement
+            // A -= B^T D^-1 C
+            // Instead of modifying A, the Ax operator is modified. i.e Ax -= B^T D^-1 C x in the WellModelMatrixAdapter.
+            // The residual is modified similarly.
+            // r = [r, r_well], where r is the residual and r_well the well residual.
+            // r -= B^T * D^-1 r_well
+
+            // apply well residual to the residual.
+            // wellModel().apply(ebosResid);
+            // the wells must be added
+            assert( param_.matrix_add_well_contributions_ );
+
+            // set initial guess
+            // x = 0.0;
+
+            //const Mat& M = matrix_for_preconditioner_ ? *matrix_for_preconditioner_.get() : ebosJac;
+            const auto& M = ebosJac; //matrix_for_preconditioner_ ? *matrix_for_preconditioner_.get() : ebosJac;
+            linearSolver_.prepareRhs(M, b);
+            linearSolver_.prepareMatrix(M);
+            bool converged = linearSolver_.solve(x);
+
         }
 
         //=====================================================================
@@ -1059,7 +1103,7 @@ namespace Opm {
         /// Should not be called
         std::vector<std::vector<double> >
         computeFluidInPlace(const std::vector<int>& /*fipnum*/) const
-        {            
+        {
             //assert(true)
             //return an empty vector
             std::vector<std::vector<double> > regionValues(0, std::vector<double>(0,0.0));
@@ -1085,6 +1129,8 @@ namespace Opm {
         Simulator& ebosSimulator_;
         const Grid&            grid_;
         const ISTLSolverType*  istlSolver_;
+        LinearSolverBackend linearSolver_;
+
         const PhaseUsage phaseUsage_;
         const bool has_disgas_;
         const bool has_vapoil_;
@@ -1139,6 +1185,7 @@ namespace Opm {
         double dsMax() const { return param_.ds_max_; }
         double drMaxRel() const { return param_.dr_max_rel_; }
         double maxResidualAllowed() const { return param_.max_residual_allowed_; }
+
 
     public:
         std::vector<bool> wasSwitched_;
