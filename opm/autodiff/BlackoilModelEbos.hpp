@@ -413,6 +413,8 @@ namespace Opm {
             }
             */
 
+            ebosSimulator_.model().linearizer().finalize();
+
             return wellModel().lastReport();
         }
 
