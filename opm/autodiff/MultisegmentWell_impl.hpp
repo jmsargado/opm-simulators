@@ -52,15 +52,14 @@ namespace Opm
         if (has_polymer) {
             OPM_THROW(std::runtime_error, "polymer is not supported by multisegment well yet");
         }
-        // since we decide to use the SegmentSet from the well parser. we can reuse a lot from it.
+        // since we decide to use the WellSegments from the well parser. we can reuse a lot from it.
         // for other facilities needed but not available from parser, we need to process them here
 
         // initialize the segment_perforations_
-        const CompletionSet& completion_set = well_ecl_->getCompletions(current_step_);
+        const WellConnections& completion_set = well_ecl_->getConnections(current_step_);
         for (int perf = 0; perf < number_of_perforations_; ++perf) {
-            const Completion& completion = completion_set.get(perf);
-            const int segment_number = completion.getSegmentNumber();
-            const int segment_index = segmentNumberToIndex(segment_number);
+            const Connection& connection = completion_set.get(perf);
+            const int segment_index = segmentNumberToIndex(connection.segment_number);
             segment_perforations_[segment_index].push_back(perf);
         }
 
@@ -81,7 +80,7 @@ namespace Opm
         for (int seg = 0; seg < numberOfSegments(); ++seg) {
             const double segment_depth = segmentSet()[seg].depth();
             for (const int perf : segment_perforations_[seg]) {
-                perf_depth_[perf] = completion_set.get(perf).getCenterDepth();
+                perf_depth_[perf] = completion_set.get(perf).center_depth;
                 perforation_segment_depth_diffs_[perf] = perf_depth_[perf] - segment_depth;
             }
         }
@@ -792,11 +791,11 @@ namespace Opm
 
 
     template <typename TypeTag>
-    const SegmentSet&
+    const WellSegments&
     MultisegmentWell<TypeTag>::
     segmentSet() const
     {
-        return well_ecl_->getSegmentSet(current_step_);
+        return well_ecl_->getWellSegments(current_step_);
     }
 
 
@@ -808,7 +807,7 @@ namespace Opm
     MultisegmentWell<TypeTag>::
     numberOfSegments() const
     {
-        return segmentSet().numberSegment();
+        return segmentSet().size();
     }
 
 

@@ -149,8 +149,7 @@ namespace Opm {
                           BlackoilWellModel<TypeTag>& well_model,
                           BlackoilAquiferModel<TypeTag>& aquifer_model,
                           const NewtonIterationBlackoilInterface& linsolver,
-                          const bool terminal_output
-                          )
+                          const bool terminal_output)
         : ebosSimulator_(ebosSimulator)
         , grid_(ebosSimulator_.vanguard().grid())
         , istlSolver_( dynamic_cast< const ISTLSolverType* > (&linsolver) )
@@ -184,11 +183,7 @@ namespace Opm {
 
         /// Called once before each time step.
         /// \param[in] timer                  simulation timer
-        /// \param[in, out] reservoir_state   reservoir state variables
-        /// \param[in, out] well_state        well state variables
-        void prepareStep(const SimulatorTimerInterface& timer,
-                         const ReservoirState& /*reservoir_state*/,
-                         const WellState& /* well_state */)
+        void prepareStep(const SimulatorTimerInterface& timer)
         {
 
             // update the solution variables in ebos
@@ -198,12 +193,16 @@ namespace Opm {
                 ebosSimulator_.model().advanceTimeLevel();
             }
 
-            // set the timestep size and index in ebos explicitly
-            // we use our own time stepper.
-            ebosSimulator_.startNextEpisode( timer.currentStepLength() );
-            ebosSimulator_.setEpisodeIndex( timer.reportStepNum() );
-            ebosSimulator_.setTimeStepSize( timer.currentStepLength() );
-            ebosSimulator_.setTimeStepIndex( timer.reportStepNum() );
+            // set the timestep size and episode index for ebos explicitly. ebos needs to
+            // know the report step/episode index because of timing dependend data
+            // despide the fact that flow uses its own time stepper. (The length of the
+            // episode does not matter, though.)
+            Scalar t = timer.simulationTimeElapsed();
+            ebosSimulator_.startNextEpisode(/*episodeStartTime=*/t, /*episodeLength=*/1e30);
+            ebosSimulator_.setEpisodeIndex(timer.reportStepNum());
+            ebosSimulator_.setTime(t);
+            ebosSimulator_.setTimeStepSize(timer.currentStepLength());
+            ebosSimulator_.setTimeStepIndex(ebosSimulator_.timeStepIndex() + 1);
 
             ebosSimulator_.problem().beginTimeStep();
 
@@ -232,9 +231,7 @@ namespace Opm {
         template <class NonlinearSolverType>
         SimulatorReport nonlinearIteration(const int iteration,
                                            const SimulatorTimerInterface& timer,
-                                           NonlinearSolverType& nonlinear_solver,
-                                           ReservoirState& /*reservoir_state*/,
-                                           WellState& /*well_state*/)
+                                           NonlinearSolverType& nonlinear_solver)
         {
             SimulatorReport report;
             failureReport_ = SimulatorReport();
@@ -345,16 +342,8 @@ namespace Opm {
         /// Called once after each time step.
         /// In this class, this function does nothing.
         /// \param[in] timer                  simulation timer
-        /// \param[in, out] reservoir_state   reservoir state variables
-        /// \param[in, out] well_state        well state variables
-        void afterStep(const SimulatorTimerInterface& timer,
-                       const ReservoirState& reservoir_state,
-                       WellState& well_state)
+        void afterStep(const SimulatorTimerInterface& OPM_UNUSED timer)
         {
-            DUNE_UNUSED_PARAMETER(timer);
-            DUNE_UNUSED_PARAMETER(reservoir_state);
-            DUNE_UNUSED_PARAMETER(well_state);
-
             wellModel().timeStepSucceeded();
             aquiferModel().timeStepSucceeded(timer);
             ebosSimulator_.problem().endTimeStep();
@@ -419,8 +408,7 @@ namespace Opm {
         }
 
         // compute the "relative" change of the solution between time steps
-        template <class Dummy>
-        double relativeChange(const Dummy&, const Dummy&) const
+        double relativeChange() const
         {
             Scalar resultDelta = 0.0;
             Scalar resultDenom = 0.0;
@@ -492,7 +480,7 @@ namespace Opm {
             resultDenom = gridView.comm().sum(resultDenom);
 
             if (resultDenom > 0.0)
-              return resultDelta/resultDenom;
+                return resultDelta/resultDenom;
             return 0.0;
         }
 
@@ -1113,6 +1101,9 @@ namespace Opm {
         }
 
         const Simulator& ebosSimulator() const
+        { return ebosSimulator_; }
+
+        Simulator& ebosSimulator()
         { return ebosSimulator_; }
 
         /// return the statistics if the nonlinearIteration() method failed

@@ -85,7 +85,6 @@ namespace Opm
 
         typedef Opm::SimulatorFullyImplicitBlackoilEbos<TypeTag> Simulator;
         typedef typename Simulator::ReservoirState ReservoirState;
-        typedef typename Simulator::OutputWriter OutputWriter;
 
         /// This is the main function of Flow.
         /// It runs a complete simulation, with the given grid and
@@ -107,7 +106,6 @@ namespace Opm
                 setupLogging();
                 printPRTHeader();
                 runDiagnostics();
-                setupOutputWriter();
                 setupLinearSolver();
                 createSimulator();
 
@@ -157,10 +155,10 @@ namespace Opm
 #ifdef _OPENMP
             // OpenMP setup.
             if (!getenv("OMP_NUM_THREADS")) {
-                // Default to at most 4 threads, regardless of
+                // Default to at most 2 threads, regardless of
                 // number of cores (unless ENV(OMP_NUM_THREADS) is defined)
                 int num_cores = omp_get_num_procs();
-                int num_threads = std::min(4, num_cores);
+                int num_threads = std::min(2, num_cores);
                 omp_set_num_threads(num_threads);
             }
             // omp_get_num_threads() only works as expected within a parallel region.
@@ -275,7 +273,7 @@ namespace Opm
 
             const std::string& output_dir = eclState().getIOConfig().getOutputDir();
             logFileStream << output_dir << "/" << baseName;
-            debugFileStream << output_dir << "/" << "." << baseName;
+            debugFileStream << output_dir << "/" << baseName;
 
             if ( must_distribute_ && mpi_rank_ != 0 )
             {
@@ -286,7 +284,7 @@ namespace Opm
                 logFileStream << "." << mpi_rank_;
             }
             logFileStream << ".PRT";
-            debugFileStream << ".DEBUG";
+            debugFileStream << ".DBG";
 
             logFile_ = logFileStream.str();
 
@@ -405,10 +403,19 @@ namespace Opm
                 argv.push_back(outputDirParam.c_str());
             }
 
-            const bool restart_double_si  = param_.getDefault("restart_double_si", false);
+            std::string asyncOutputParam("--enable-async-ecl-output=");
+            if (param_.has("async_output")) {
+                const std::string& value = param_.get<std::string>("async_output");
+                asyncOutputParam += value;
+                argv.push_back(asyncOutputParam.c_str());
+            }
+
             std::string outputDoublePrecisionParam("--ecl-output-double-precision=");
-            outputDoublePrecisionParam += restart_double_si ? "true" : "false";
-            argv.push_back(outputDoublePrecisionParam.c_str());
+            if (param_.has("restart_double_si")) {
+                const std::string& value  = param_.get<std::string>("restart_double_si");
+                outputDoublePrecisionParam += value;
+                argv.push_back(outputDoublePrecisionParam.c_str());
+            }
 
 #if defined(_OPENMP)
             std::string numThreadsParam("--threads-per-process=");
@@ -480,20 +487,6 @@ namespace Opm
             diagnostic.diagnosis(eclState(), deck(), this->grid());
         }
 
-        // Setup output writer.
-        // Writes to:
-        //   output_writer_
-        void setupOutputWriter()
-        {
-            // create output writer after grid is distributed, otherwise the parallel output
-            // won't work correctly since we need to create a mapping from the distributed to
-            // the global view
-
-            output_writer_.reset(new OutputWriter(*ebosSimulator_,
-                                                   param_));
-
-        }
-
         // Run the simulator.
         // Returns EXIT_SUCCESS if it does not throw.
         int runSimulator()
@@ -551,7 +544,21 @@ namespace Opm
             {
                 if ( eclState().getSimulationConfig().useCPR() )
                 {
+                /* Deactivate selection of CPR via eclipse keyword
+                   as this preconditioner is still considered experimental
+                   and fails miserably for some models.
                     param_.insertParameter("solver_approach", cprSolver);
+                */
+                    if ( output_cout_ )
+                    {
+                        std::ostringstream message;
+                        message << "Ignoring request for CPRPreconditioner "
+                             << "via Eclipse keyword as it is considered "
+                             <<" experimental. To activate use "
+                             <<"\"solver_approach=cprSolver\" command "
+                             <<"line parameter.";
+                        OpmLog::info(message.str());
+                    }
                 }
             }
             extractParallelGridInformationToISTL(grid(), parallel_information_);
@@ -567,10 +574,7 @@ namespace Opm
             // Create the simulator instance.
             simulator_.reset(new Simulator(*ebosSimulator_,
                                            param_,
-                                           *fis_solver_,
-                                           FluidSystem::enableDissolvedGas(),
-                                           FluidSystem::enableVaporizedOil(),
-                                           *output_writer_));
+                                           *fis_solver_));
         }
 
     private:
@@ -619,7 +623,6 @@ namespace Opm
         bool must_distribute_ = false;
         ParameterGroup param_;
         bool output_to_files_ = false;
-        std::unique_ptr<OutputWriter> output_writer_;
         boost::any parallel_information_;
         std::unique_ptr<NewtonIterationBlackoilInterface> fis_solver_;
         std::unique_ptr<Simulator> simulator_;

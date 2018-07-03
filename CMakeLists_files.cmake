@@ -304,6 +304,7 @@ list (APPEND PUBLIC_HEADER_FILES
   opm/autodiff/NewtonIterationUtilities.hpp
   opm/autodiff/NonlinearSolver.hpp
   opm/autodiff/NonlinearSolver_impl.hpp
+  opm/autodiff/NonlinearSolverEbos.hpp
   opm/autodiff/LinearisedBlackoilResidual.hpp
   opm/autodiff/ParallelDebugOutput.hpp
   opm/autodiff/ParallelOverlappingILU0.hpp
@@ -322,7 +323,6 @@ list (APPEND PUBLIC_HEADER_FILES
   opm/autodiff/WellDensitySegmented.hpp
   opm/autodiff/WellStateFullyImplicitBlackoil.hpp
   opm/autodiff/SimulatorFullyImplicitBlackoilOutput.hpp
-  opm/autodiff/BlackoilOutputEbos.hpp
   opm/autodiff/ThreadHandle.hpp
   opm/autodiff/VFPProperties.hpp
   opm/autodiff/VFPHelpers.hpp
@@ -458,6 +458,7 @@ list (APPEND PUBLIC_HEADER_FILES
   opm/simulators/timestepping/AdaptiveSimulatorTimer.hpp
   opm/simulators/timestepping/AdaptiveTimeStepping.hpp
   opm/simulators/timestepping/AdaptiveTimeStepping_impl.hpp
+  opm/simulators/timestepping/AdaptiveTimeSteppingEbos.hpp
   opm/simulators/timestepping/TimeStepControl.hpp
   opm/simulators/timestepping/TimeStepControlInterface.hpp
   opm/simulators/timestepping/SimulatorTimer.hpp
