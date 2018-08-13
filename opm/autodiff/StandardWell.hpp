@@ -340,6 +340,7 @@ namespace Opm
 
         // handle the non reasonable fractions due to numerical overshoot
         void processFractions() const;
+
     };
 
 }

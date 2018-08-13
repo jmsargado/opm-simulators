@@ -36,7 +36,6 @@
 
 #include <opm/grid/UnstructuredGrid.h>
 #include <opm/core/simulator/SimulatorReport.hpp>
-#include <opm/core/linalg/LinearSolverInterface.hpp>
 #include <opm/core/linalg/ParallelIstlInformation.hpp>
 #include <opm/core/props/phaseUsageFromDeck.hpp>
 #include <opm/common/ErrorMacros.hpp>
@@ -73,7 +72,6 @@ NEW_TYPE_TAG(EclFlowProblem, INHERITS_FROM(BlackOilModel, EclBaseProblem));
 SET_STRING_PROP(EclFlowProblem, EclOutputDir, "");
 SET_BOOL_PROP(EclFlowProblem, DisableWells, true);
 SET_BOOL_PROP(EclFlowProblem, EnableDebuggingChecks, false);
-SET_BOOL_PROP(EclFlowProblem, ExportGlobalTransmissibility, true);
 // default in flow is to formulate the equations in surface volumes
 SET_BOOL_PROP(EclFlowProblem, BlackoilConserveSurfaceVolume, true);
 SET_BOOL_PROP(EclFlowProblem, UseVolumetricResidual, false);
@@ -210,7 +208,7 @@ namespace Opm {
             wasSwitched_.resize(numDof);
             std::fill(wasSwitched_.begin(), wasSwitched_.end(), false);
 
-            wellModel().beginTimeStep();
+            wellModel().beginTimeStep(timer.reportStepNum(), timer.simulationTimeElapsed());
 
             if (param_.update_equations_scaling_) {
                 std::cout << "equation scaling not suported yet" << std::endl;
@@ -344,7 +342,7 @@ namespace Opm {
         /// \param[in] timer                  simulation timer
         void afterStep(const SimulatorTimerInterface& OPM_UNUSED timer)
         {
-            wellModel().timeStepSucceeded();
+            wellModel().timeStepSucceeded(timer.simulationTimeElapsed());
             aquiferModel().timeStepSucceeded(timer);
             ebosSimulator_.problem().endTimeStep();
 

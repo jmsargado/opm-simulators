@@ -69,6 +69,7 @@ function(add_test_compare_restarted_simulation)
                            ${PARAM_ABS_TOL} ${PARAM_REL_TOL}
                            ${COMPARE_SUMMARY_COMMAND}
                            ${COMPARE_ECL_COMMAND}
+                           ${OPM_PACK_COMMAND}
                            0
                TEST_ARGS ${TEST_ARGS})
 endfunction()
@@ -130,6 +131,7 @@ function(add_test_compare_parallel_restarted_simulation)
                            ${PARAM_ABS_TOL} ${PARAM_REL_TOL}
                            ${COMPARE_SUMMARY_COMMAND}
                            ${COMPARE_ECL_COMMAND}
+                           ${OPM_PACK_COMMAND}
                            1
                TEST_ARGS ${TEST_ARGS})
 endfunction()
@@ -181,6 +183,13 @@ add_test_compareECLFiles(CASENAME spe1
                          ABS_TOL ${abs_tol}
                          REL_TOL ${rel_tol})
 
+add_test_compareECLFiles(CASENAME spe1
+                         FILENAME SPE1CASE1
+                         SIMULATOR flow
+                         ABS_TOL ${abs_tol}
+                         REL_TOL ${rel_tol})
+
+
 add_test_compareECLFiles(CASENAME spe1_nowells
                          FILENAME SPE1CASE2_NOWELLS
                          SIMULATOR flow
@@ -194,6 +203,13 @@ add_test_compareECLFiles(CASENAME spe1_thermal
                          ABS_TOL ${abs_tol}
                          REL_TOL ${rel_tol}
                          DIR spe1)
+
+add_test_compareECLFiles(CASENAME spe1_metric_vfp1
+                         FILENAME SPE1CASE1_METRIC_VFP1
+                         SIMULATOR flow
+                         ABS_TOL ${abs_tol}
+                         REL_TOL ${rel_tol}
+                         DIR vfpprod_spe1)
 
 add_test_compareECLFiles(CASENAME ctaquifer_2d_oilwater
                          FILENAME 2D_OW_CTAQUIFER
@@ -245,6 +261,7 @@ add_test_compareECLFiles(CASENAME polymer_oilwater
                          ABS_TOL ${abs_tol}
                          REL_TOL ${rel_tol})
 
+
 add_test_compareECLFiles(CASENAME polymer_simple2D
                          FILENAME 2D_THREEPHASE_POLY_HETER
                          SIMULATOR flow
@@ -258,6 +275,33 @@ add_test_compareECLFiles(CASENAME spe5
                          ABS_TOL ${abs_tol}
                          REL_TOL ${coarse_rel_tol}
                          TEST_ARGS max_iter=20)
+
+add_test_compareECLFiles(CASENAME wecon_wtest
+                         FILENAME 3D_WECON
+                         SIMULATOR flow
+                         ABS_TOL ${abs_tol}
+                         REL_TOL ${coarse_rel_tol})
+
+add_test_compareECLFiles(CASENAME msw_model_1
+                         FILENAME MSW_MODEL_1
+                         SIMULATOR flow
+                         ABS_TOL ${abs_tol}
+                         REL_TOL ${rel_tol}
+                         DIR model1)
+
+add_test_compareECLFiles(CASENAME base_model_1
+                         FILENAME BASE_MODEL_1
+                         SIMULATOR flow
+                         ABS_TOL ${abs_tol}
+                         REL_TOL ${rel_tol}
+                         DIR model1)
+
+add_test_compareECLFiles(CASENAME faults_model_1
+                         FILENAME FAULTS_MODEL_1
+                         SIMULATOR flow
+                         ABS_TOL ${abs_tol}
+                         REL_TOL ${rel_tol}
+                         DIR model1)
 
 # Restart tests
 opm_set_test_driver(${PROJECT_SOURCE_DIR}/tests/run-restart-regressionTest.sh "")
