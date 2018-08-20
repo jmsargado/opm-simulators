@@ -22,6 +22,8 @@
 
 #if HAVE_DUNE_FEM
 #define USE_DUNE_FEM_SOLVERS 1
+#define ENABLE_DUNE_FEM_ISTL_SOLVERS 1
+//#define ENABLE_DUNE_FEM_ISTLPETSC_SOLVERS 1
 #endif
 
 #include <opm/simulators/flow_ebos_blackoil.hpp>

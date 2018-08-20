@@ -122,7 +122,8 @@ namespace Opm {
         static const int temperatureIdx = Indices::temperatureIdx;
 
         typedef Dune::FieldVector<Scalar, numEq >        VectorBlockType;
-        typedef Dune::FieldMatrix<Scalar, numEq, numEq > MatrixBlockType;
+        //typedef Dune::FieldMatrix<Scalar, numEq, numEq > MatrixBlockType;
+        typedef Dune::MatrixBlock<Scalar, numEq, numEq > MatrixBlockType;
 
         typedef Dune::BCRSMatrix <MatrixBlockType>      Mat;
         typedef Dune::BlockVector<VectorBlockType>      BVector;
@@ -284,6 +285,7 @@ namespace Opm {
 
                 try {
                     solveJacobianSystemEbos(x);
+                    //solveJacobianSystem(x);
                     report.linear_solve_time += perfTimer.stop();
                     report.total_linear_iterations += linearIterationsLastSolveEbos();
                 }
