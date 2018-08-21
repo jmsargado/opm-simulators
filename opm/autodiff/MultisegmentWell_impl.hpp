@@ -1768,7 +1768,7 @@ namespace Opm
         //
         // but for the top segment, the pressure equation will be the well control equation, and the other three will be the same.
 
-        auto& ebosJac = ebosSimulator.model().linearizer().matrix();
+        auto& ebosJac = ebosSimulator.model().linearizer().jacobian();
         auto& ebosResid = ebosSimulator.model().linearizer().residual();
 
         const bool allow_cf = getAllowCrossFlow();

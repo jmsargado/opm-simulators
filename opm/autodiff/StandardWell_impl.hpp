@@ -447,7 +447,7 @@ namespace Opm
         invDuneD_ = 0.0;
         resWell_ = 0.0;
 
-        auto& ebosJac = ebosSimulator.model().linearizer().matrix();
+        auto& ebosJac = ebosSimulator.model().linearizer().jacobian();
         auto& ebosResid = ebosSimulator.model().linearizer().residual();
 
         MatrixBlockType block( 0 );

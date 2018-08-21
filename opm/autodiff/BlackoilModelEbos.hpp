@@ -390,7 +390,7 @@ namespace Opm {
                 OPM_THROW(Opm::NumericalIssue,"Error encounted when solving well equations");
             }
 
-            auto& ebosJac = ebosSimulator_.model().linearizer().matrix();
+            auto& ebosJac = ebosSimulator_.model().linearizer().jacobian();
             if (param_.matrix_add_well_contributions_) {
                 wellModel().addWellContributions(ebosJac);
             }
@@ -541,7 +541,7 @@ namespace Opm {
         /// r is the residual.
         void solveJacobianSystemEbos(BVector& x)
         {
-            const auto& ebosJac = ebosSimulator_.model().linearizer().matrix();
+            const auto& ebosJac = ebosSimulator_.model().linearizer().jacobian();
             auto& b = ebosSimulator_.model().linearizer().residual();
 
             // J = [A, B; C, D], where A is the reservoir equations, B and C the interaction of well

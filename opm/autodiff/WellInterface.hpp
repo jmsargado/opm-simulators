@@ -87,7 +87,6 @@ namespace Opm
         static const int numEq = Indices::numEq;
 
         typedef Dune::FieldVector<Scalar, numEq    > VectorBlockType;
-        // typedef Dune::FieldMatrix<Scalar, numEq, numEq > MatrixBlockType;
         typedef typename JacobianMatrix :: block_type   MatrixBlockType;
         typedef Dune::BCRSMatrix <MatrixBlockType> Mat;
         typedef Dune::BlockVector<VectorBlockType> BVector;

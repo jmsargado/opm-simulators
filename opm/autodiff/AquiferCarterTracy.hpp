@@ -50,7 +50,7 @@ namespace Opm
 
             static const int numEq = BlackoilIndices::numEq;
 
-            typedef Dune::FieldMatrix< Scalar, numEq, numEq > MatrixBlock;
+            typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) :: block_type MatrixBlock;
 
             typedef DenseAd::Evaluation<double, /*size=*/numEq> Eval;
             typedef Opm::BlackOilFluidState<Eval, FluidSystem> FluidState;
@@ -72,7 +72,7 @@ namespace Opm
 
             inline void assembleAquiferEq(const SimulatorTimerInterface& timer)
             {
-                auto& ebosJac = ebos_simulator_.model().linearizer().matrix();
+                auto& ebosJac = ebos_simulator_.model().linearizer().jacobian();
                 auto& ebosResid = ebos_simulator_.model().linearizer().residual();
 
                 MatrixBlock block;
