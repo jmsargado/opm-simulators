@@ -20,6 +20,7 @@
 #ifndef OPM_ISTLSOLVER_HEADER_INCLUDED
 #define OPM_ISTLSOLVER_HEADER_INCLUDED
 
+#include <opm/autodiff/ISTLSolverEbos.hpp>
 #include <opm/autodiff/BlackoilAmg.hpp>
 #include <opm/autodiff/CPRPreconditioner.hpp>
 #include <opm/autodiff/NewtonIterationBlackoilInterleaved.hpp>
@@ -38,34 +39,11 @@
 #include <dune/istl/solvers.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/paamg/amg.hh>
-#include <ewoms/linear/matrixblock.hh>
 
 #include <opm/common/utility/platform_dependent/reenable_warnings.h>
 
-
 namespace Opm
 {
-namespace Detail
-{
-    //! calculates ret = A^T * B
-    template< class K, int m, int n, int p >
-    static inline void multMatrixTransposed ( const Dune::FieldMatrix< K, n, m > &A,
-                                              const Dune::FieldMatrix< K, n, p > &B,
-                                              Dune::FieldMatrix< K, m, p > &ret )
-    {
-        typedef typename Dune::FieldMatrix< K, m, p > :: size_type size_type;
-
-        for( size_type i = 0; i < m; ++i )
-        {
-            for( size_type j = 0; j < p; ++j )
-            {
-                ret[ i ][ j ] = K( 0 );
-                for( size_type k = 0; k < n; ++k )
-                    ret[ i ][ j ] += A[ k ][ i ] * B[ k ][ j ];
-            }
-        }
-    }
-}
     /// This class solves the fully implicit black-oil system by
     /// solving the reduced system (after eliminating well variables)
     /// as a block-structured matrix (one block for all cell variables) for a fixed
