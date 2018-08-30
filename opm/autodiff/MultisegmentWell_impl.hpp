@@ -1768,7 +1768,7 @@ namespace Opm
         //
         // but for the top segment, the pressure equation will be the well control equation, and the other three will be the same.
 
-        auto& ebosJac = ebosSimulator.model().linearizer().matrix();
+        auto& ebosJac = ebosSimulator.model().linearizer().jacobian();
         auto& ebosResid = ebosSimulator.model().linearizer().residual();
 
         const bool allow_cf = getAllowCrossFlow();
@@ -1838,12 +1838,15 @@ namespace Opm
                         duneD_[seg][seg][comp_idx][pv_idx] -= cq_s_effective.derivative(pv_idx + numEq);
                     }
 
-                    for (int pv_idx = 0; pv_idx < numEq; ++pv_idx) {
-                        if (!only_wells) {
+                    if (!only_wells) {
+                        JacobianBlockType block( 0 );
+                        for (int pv_idx = 0; pv_idx < numEq; ++pv_idx) {
                             // also need to consider the efficiency factor when manipulating the jacobians.
-                            ebosJac[cell_idx][cell_idx][comp_idx][pv_idx] -= cq_s_effective.derivative(pv_idx);
+                            // ebosJac[cell_idx][cell_idx][comp_idx][pv_idx] -= cq_s_effective.derivative(pv_idx);
+                            block[comp_idx][pv_idx] -= cq_s_effective.derivative(pv_idx);
                             duneB_[seg][cell_idx][comp_idx][pv_idx] -= cq_s_effective.derivative(pv_idx);
                         }
+                        ebosJac.addBlock( cell_idx, cell_idx, block );
                     }
                 }
                 // TODO: we should save the perforation pressure and preforation rates?

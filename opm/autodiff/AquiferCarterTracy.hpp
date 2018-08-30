@@ -46,6 +46,7 @@ namespace Opm
             typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
             typedef typename GET_PROP_TYPE(TypeTag, Indices) BlackoilIndices;
             typedef typename GET_PROP_TYPE(TypeTag, IntensiveQuantities) IntensiveQuantities;
+            typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) :: block_type JacobianBlockType;
 
             static const int numEq = BlackoilIndices::numEq;
             typedef double Scalar;
@@ -70,8 +71,10 @@ namespace Opm
 
             inline void assembleAquiferEq(const SimulatorTimerInterface& timer)
             {
-                auto& ebosJac = ebos_simulator_.model().linearizer().matrix();
+                auto& ebosJac = ebos_simulator_.model().linearizer().jacobian();
                 auto& ebosResid = ebos_simulator_.model().linearizer().residual();
+
+                JacobianBlockType block( 0 );
 
                 size_t cellID;
                 for ( size_t idx = 0; idx < cell_idx_.size(); ++idx )
@@ -88,11 +91,14 @@ namespace Opm
                     qinflow = Qai_.at(idx);
                     ebosResid[cellID][waterCompIdx] -= qinflow.value();
 
-                    for (int pvIdx = 0; pvIdx < numEq; ++pvIdx) 
+                    block = 0 ;
+                    for (int pvIdx = 0; pvIdx < numEq; ++pvIdx)
                     {
                         // also need to consider the efficiency factor when manipulating the jacobians.
-                        ebosJac[cellID][cellID][waterCompIdx][pvIdx] -= qinflow.derivative(pvIdx);
+                        //ebosJac[cellID][cellID][waterCompIdx][pvIdx] -= qinflow.derivative(pvIdx);
+                        block[waterCompIdx][pvIdx] -= qinflow.derivative(pvIdx);
                     }
+                    ebosJac.addBlock( cellID, cellID, block );
                 }
             }
 
@@ -203,7 +209,7 @@ namespace Opm
                 b = beta_ / (Tc_ * ( PItd - td*PItdprime));
             }
 
-            // This function implements Eq 5.7 of the EclipseTechnicalDescription       
+            // This function implements Eq 5.7 of the EclipseTechnicalDescription
             inline void calculateInflowRate(int idx, const SimulatorTimerInterface& timer)
             {
                 Scalar a, b;
@@ -220,7 +226,7 @@ namespace Opm
                         * aquct_data_.r_o * aquct_data_.r_o;
                 // We calculate the time constant
                 Tc_ = mu_w_ * aquct_data_.phi_aq
-                      * aquct_data_.C_t 
+                      * aquct_data_.C_t
                       * aquct_data_.r_o * aquct_data_.r_o
                       / ( aquct_data_.k_a * aquct_data_.c1 );
             }
@@ -257,7 +263,7 @@ namespace Opm
                 for (size_t idx = 0; idx < cell_idx_.size(); ++idx)
                 {
                     auto cellFacesRange = cell2Faces[cell_idx_.at(idx)];
-                    
+
                     for(auto cellFaceIter = cellFacesRange.begin(); cellFaceIter != cellFacesRange.end(); ++cellFaceIter)
                     {
                         // The index of the face in the compressed grid
@@ -307,9 +313,9 @@ namespace Opm
             {
 
                 int pvttableIdx = aquct_data_.pvttableID - 1;
-                
+
                 rhow_.resize(cell_idx_.size(),0.);
-                
+
                 if (aquct_data_.p0 < 1.0)
                 {
                    pa0_ = calculateReservoirEquilibrium();
@@ -346,7 +352,7 @@ namespace Opm
                     size_t cellIDx = cell_idx_.at(idx);
                     const auto& intQuants = *(ebos_simulator_.model().cachedIntensiveQuantities(cellIDx, /*timeIdx=*/ 0));
                     const auto& fs = intQuants.fluidState();
-                    
+
                     water_pressure_reservoir = fs.pressure(waterPhaseIdx).value();
                     rhow_.at(idx) = fs.density(waterPhaseIdx);
                     pw_aquifer.push_back( (water_pressure_reservoir - rhow_.at(idx).value()*gravity_*(cell_depth_.at(idx) - aquct_data_.d0))*alphai_.at(idx) );
