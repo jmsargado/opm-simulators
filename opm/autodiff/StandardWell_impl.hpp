@@ -447,8 +447,10 @@ namespace Opm
         invDuneD_ = 0.0;
         resWell_ = 0.0;
 
-        auto& ebosJac = ebosSimulator.model().linearizer().matrix();
+        auto& ebosJac = ebosSimulator.model().linearizer().jacobian();
         auto& ebosResid = ebosSimulator.model().linearizer().residual();
+
+        JacobianBlockType block( 0 );
 
         // TODO: it probably can be static member for StandardWell
         const double volume = 0.002831684659200; // 0.1 cu ft;
@@ -501,12 +503,15 @@ namespace Opm
                     invDuneD_[0][0][componentIdx][pvIdx] -= cq_s_effective.derivative(pvIdx+numEq);
                 }
 
-                for (int pvIdx = 0; pvIdx < numEq; ++pvIdx) {
-                    if (!only_wells) {
+                if (!only_wells) {
+                    block = 0 ;
+                    for (int pvIdx = 0; pvIdx < numEq; ++pvIdx) {
                         // also need to consider the efficiency factor when manipulating the jacobians.
-                        ebosJac[cell_idx][cell_idx][componentIdx][pvIdx] -= cq_s_effective.derivative(pvIdx);
+                        block[ componentIdx][pvIdx] -= cq_s_effective.derivative(pvIdx);
+                        //ebosJac[cell_idx][cell_idx][componentIdx][pvIdx] -= cq_s_effective.derivative(pvIdx);
                         duneB_[0][cell_idx][componentIdx][pvIdx] -= cq_s_effective.derivative(pvIdx);
                     }
+                    ebosJac.addBlock( cell_idx, cell_idx, block );
                 }
 
                 // Store the perforation phase flux for later usage.
@@ -574,10 +579,13 @@ namespace Opm
                     cq_r_thermal *= GET_PROP_VALUE(TypeTag, BlackOilEnergyScalingFactor);
 
                     if (!only_wells) {
+                        block = 0;
                         for (int pvIdx = 0; pvIdx < numEq; ++pvIdx) {
-                            ebosJac[cell_idx][cell_idx][contiEnergyEqIdx][pvIdx] -= cq_r_thermal.derivative(pvIdx);
+                            block[contiEnergyEqIdx][pvIdx] -= cq_r_thermal.derivative(pvIdx);
+                            //ebosJac[cell_idx][cell_idx][contiEnergyEqIdx][pvIdx] -= cq_r_thermal.derivative(pvIdx);
                         }
                         ebosResid[cell_idx][contiEnergyEqIdx] -= cq_r_thermal.value();
+                        ebosJac.addBlock( cell_idx, cell_idx, block );
                     }
                 }
             }
@@ -592,10 +600,13 @@ namespace Opm
                     cq_s_poly *= extendEval(intQuants.polymerConcentration() * intQuants.polymerViscosityCorrection());
                 }
                 if (!only_wells) {
+                    block = 0;
                     for (int pvIdx = 0; pvIdx < numEq; ++pvIdx) {
-                        ebosJac[cell_idx][cell_idx][contiPolymerEqIdx][pvIdx] -= cq_s_poly.derivative(pvIdx);
+                        //ebosJac[cell_idx][cell_idx][contiPolymerEqIdx][pvIdx] -= cq_s_poly.derivative(pvIdx);
+                        block[contiPolymerEqIdx][pvIdx] -= cq_s_poly.derivative(pvIdx);
                     }
                     ebosResid[cell_idx][contiPolymerEqIdx] -= cq_s_poly.value();
+                    ebosJac.addBlock( cell_idx, cell_idx, block );
                 }
             }
 

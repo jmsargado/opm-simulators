@@ -49,6 +49,7 @@ namespace Opm
         using typename Base::Indices;
         using typename Base::PolymerModule;
         using typename Base::RateConverterType;
+        using typename Base::JacobianBlockType;
 
         using Base::numEq;
 

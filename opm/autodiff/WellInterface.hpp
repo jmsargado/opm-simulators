@@ -82,6 +82,9 @@ namespace Opm
         typedef typename GET_PROP_TYPE(TypeTag, IntensiveQuantities) IntensiveQuantities;
         typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
 
+        typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix)  Jacobian;
+        typedef typename Jacobian :: block_type JacobianBlockType;
+
         static const int numEq = Indices::numEq;
         typedef double Scalar;
 
