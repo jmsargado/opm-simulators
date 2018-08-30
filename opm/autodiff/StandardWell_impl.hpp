@@ -450,7 +450,7 @@ namespace Opm
         auto& ebosJac = ebosSimulator.model().linearizer().jacobian();
         auto& ebosResid = ebosSimulator.model().linearizer().residual();
 
-        MatrixBlockType block( 0 );
+        JacobianBlockType block( 0 );
 
         // TODO: it probably can be static member for StandardWell
         const double volume = 0.002831684659200; // 0.1 cu ft;
@@ -504,18 +504,14 @@ namespace Opm
                 }
 
                 if (!only_wells) {
-                    block = 0;
+                    block = 0 ;
                     for (int pvIdx = 0; pvIdx < numEq; ++pvIdx) {
                         // also need to consider the efficiency factor when manipulating the jacobians.
-                        block[componentIdx][pvIdx] -= cq_s_effective.derivative(pvIdx);
+                        block[ componentIdx][pvIdx] -= cq_s_effective.derivative(pvIdx);
+                        //ebosJac[cell_idx][cell_idx][componentIdx][pvIdx] -= cq_s_effective.derivative(pvIdx);
                         duneB_[0][cell_idx][componentIdx][pvIdx] -= cq_s_effective.derivative(pvIdx);
                     }
-
-#if USE_DUNE_FEM_SOLVERS
                     ebosJac.addBlock( cell_idx, cell_idx, block );
-#else
-                    ebosJac[cell_idx][cell_idx] += block;
-#endif
                 }
 
                 // Store the perforation phase flux for later usage.
@@ -586,13 +582,10 @@ namespace Opm
                         block = 0;
                         for (int pvIdx = 0; pvIdx < numEq; ++pvIdx) {
                             block[contiEnergyEqIdx][pvIdx] -= cq_r_thermal.derivative(pvIdx);
+                            //ebosJac[cell_idx][cell_idx][contiEnergyEqIdx][pvIdx] -= cq_r_thermal.derivative(pvIdx);
                         }
                         ebosResid[cell_idx][contiEnergyEqIdx] -= cq_r_thermal.value();
-#if USE_DUNE_FEM_SOLVERS
                         ebosJac.addBlock( cell_idx, cell_idx, block );
-#else
-                        ebosJac[cell_idx][cell_idx] += block;
-#endif
                     }
                 }
             }
@@ -607,16 +600,13 @@ namespace Opm
                     cq_s_poly *= extendEval(intQuants.polymerConcentration() * intQuants.polymerViscosityCorrection());
                 }
                 if (!only_wells) {
-                    block = 0 ;
+                    block = 0;
                     for (int pvIdx = 0; pvIdx < numEq; ++pvIdx) {
+                        //ebosJac[cell_idx][cell_idx][contiPolymerEqIdx][pvIdx] -= cq_s_poly.derivative(pvIdx);
                         block[contiPolymerEqIdx][pvIdx] -= cq_s_poly.derivative(pvIdx);
                     }
                     ebosResid[cell_idx][contiPolymerEqIdx] -= cq_s_poly.value();
-#if USE_DUNE_FEM_SOLVERS
                     ebosJac.addBlock( cell_idx, cell_idx, block );
-#else
-                    ebosJac[cell_idx][cell_idx] += block;
-#endif
                 }
             }
 
@@ -2221,7 +2211,7 @@ namespace Opm
 
     template<typename TypeTag>
     void
-    StandardWell<TypeTag>::addWellContributions(JacobianMatrix& mat) const
+    StandardWell<TypeTag>::addWellContributions(Mat& mat) const
     {
         // We need to change matrx A as follows
         // A -= C^T D^-1 B
@@ -2232,33 +2222,21 @@ namespace Opm
         for ( auto colC = duneC_[0].begin(), endC = duneC_[0].end(); colC != endC; ++colC )
         {
             const auto row_index = colC.index();
-
-#if ! USE_DUNE_FEM_SOLVERS
             auto& row = mat[row_index];
             auto col = row.begin();
-#endif
 
             for ( auto colB = duneB_[0].begin(), endB = duneB_[0].end(); colB != endB; ++colB )
             {
                 const auto col_index = colB.index();
-
-#if ! USE_DUNE_FEM_SOLVERS
                 // Move col to index col_index
                 while ( col != row.end() && col.index() < col_index ) ++col;
                 assert(col != row.end() && col.index() == col_index);
-#endif
 
                 Dune::FieldMatrix<Scalar, numWellEq, numEq> tmp;
-                Dune::FieldMatrix<Scalar, numEq, numEq> tmp1;
-                //typename Mat::block_type tmp1;
+                typename Mat::block_type tmp1;
                 Dune::FMatrixHelp::multMatrix(invDuneD_[0][0],  (*colB), tmp);
                 Detail::multMatrixTransposed((*colC), tmp, tmp1);
-#if USE_DUNE_FEM_SOLVERS
-                tmp1 *= -1.0 ;
-                mat.addBlock( row_index, col_index, tmp1 );
-#else
                 (*col) -= tmp1;
-#endif
             }
         }
     }

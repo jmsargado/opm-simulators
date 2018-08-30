@@ -42,15 +42,14 @@ namespace Opm
 
         public:
 
-            typedef typename GET_PROP_TYPE(TypeTag, Simulator)            Simulator;
-            typedef typename GET_PROP_TYPE(TypeTag, FluidSystem)          FluidSystem;
-            typedef typename GET_PROP_TYPE(TypeTag, Indices)              BlackoilIndices;
-            typedef typename GET_PROP_TYPE(TypeTag, IntensiveQuantities)  IntensiveQuantities;
-            typedef typename GET_PROP_TYPE(TypeTag, Scalar)               Scalar;
+            typedef typename GET_PROP_TYPE(TypeTag, Simulator) Simulator;
+            typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+            typedef typename GET_PROP_TYPE(TypeTag, Indices) BlackoilIndices;
+            typedef typename GET_PROP_TYPE(TypeTag, IntensiveQuantities) IntensiveQuantities;
+            typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) :: block_type JacobianBlockType;
 
             static const int numEq = BlackoilIndices::numEq;
-
-            typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) :: block_type MatrixBlock;
+            typedef double Scalar;
 
             typedef DenseAd::Evaluation<double, /*size=*/numEq> Eval;
             typedef Opm::BlackOilFluidState<Eval, FluidSystem> FluidState;
@@ -75,12 +74,13 @@ namespace Opm
                 auto& ebosJac = ebos_simulator_.model().linearizer().jacobian();
                 auto& ebosResid = ebos_simulator_.model().linearizer().residual();
 
-                MatrixBlock block;
-                const size_t nCells = cell_idx_.size();
-                for ( size_t idx = 0; idx < nCells; ++idx )
+                JacobianBlockType block( 0 );
+
+                size_t cellID;
+                for ( size_t idx = 0; idx < cell_idx_.size(); ++idx )
                 {
                     Eval qinflow = 0.0;
-                    const size_t cellID = cell_idx_.at(idx);
+                    cellID = cell_idx_.at(idx);
                     // We are dereferencing the value of IntensiveQuantities because cachedIntensiveQuantities return a const pointer to
                     // IntensiveQuantities of that particular cell_id
                     const IntensiveQuantities intQuants = *(ebos_simulator_.model().cachedIntensiveQuantities(cellID, /*timeIdx=*/ 0));
@@ -91,17 +91,14 @@ namespace Opm
                     qinflow = Qai_.at(idx);
                     ebosResid[cellID][waterCompIdx] -= qinflow.value();
 
-                    block = 0;
+                    block = 0 ;
                     for (int pvIdx = 0; pvIdx < numEq; ++pvIdx)
                     {
+                        // also need to consider the efficiency factor when manipulating the jacobians.
+                        //ebosJac[cellID][cellID][waterCompIdx][pvIdx] -= qinflow.derivative(pvIdx);
                         block[waterCompIdx][pvIdx] -= qinflow.derivative(pvIdx);
                     }
-#if USE_DUNE_FEM_SOLVERS
                     ebosJac.addBlock( cellID, cellID, block );
-#else
-                    // also need to consider the efficiency factor when manipulating the jacobians.
-                    ebosJac[cellID][cellID] += block;
-#endif
                 }
             }
 

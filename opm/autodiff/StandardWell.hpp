@@ -49,6 +49,7 @@ namespace Opm
         using typename Base::Indices;
         using typename Base::PolymerModule;
         using typename Base::RateConverterType;
+        using typename Base::JacobianBlockType;
 
         using Base::numEq;
 
@@ -94,8 +95,6 @@ namespace Opm
         using Base::Oil;
         using Base::Gas;
 
-        using typename Base::JacobianMatrix;
-        using typename Base::MatrixBlockType;
         using typename Base::Mat;
         using typename Base::BVector;
         using typename Base::Eval;
@@ -171,7 +170,7 @@ namespace Opm
         virtual void calculateExplicitQuantities(const Simulator& ebosSimulator,
                                                  const WellState& well_state); // should be const?
 
-        virtual void  addWellContributions(JacobianMatrix& mat) const;
+        virtual void  addWellContributions(Mat& mat) const;
 
         /// \brief Wether the Jacobian will also have well contributions in it.
         virtual bool jacobianContainsWellContributions() const

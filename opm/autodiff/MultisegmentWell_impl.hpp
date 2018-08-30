@@ -1839,17 +1839,14 @@ namespace Opm
                     }
 
                     if (!only_wells) {
-                        MatrixBlockType block( 0 );
+                        JacobianBlockType block( 0 );
                         for (int pv_idx = 0; pv_idx < numEq; ++pv_idx) {
                             // also need to consider the efficiency factor when manipulating the jacobians.
+                            // ebosJac[cell_idx][cell_idx][comp_idx][pv_idx] -= cq_s_effective.derivative(pv_idx);
                             block[comp_idx][pv_idx] -= cq_s_effective.derivative(pv_idx);
                             duneB_[seg][cell_idx][comp_idx][pv_idx] -= cq_s_effective.derivative(pv_idx);
                         }
-#if USE_DUNE_FEM_SOLVERS
                         ebosJac.addBlock( cell_idx, cell_idx, block );
-#else
-                        ebosJac[cell_idx][cell_idx] += block;
-#endif
                     }
                 }
                 // TODO: we should save the perforation pressure and preforation rates?

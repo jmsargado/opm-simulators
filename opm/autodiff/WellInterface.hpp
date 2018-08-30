@@ -41,7 +41,7 @@
 #include <opm/autodiff/VFPProdProperties.hpp>
 #include <opm/autodiff/WellHelpers.hpp>
 #include <opm/autodiff/WellStateFullyImplicitBlackoil.hpp>
-#include <opm/autodiff/BlackoilModelParameters.hpp>
+#include <opm/autodiff/BlackoilModelParametersEbos.hpp>
 #include <opm/autodiff/RateConverter.hpp>
 
 #include <opm/simulators/WellSwitchingLogger.hpp>
@@ -69,7 +69,7 @@ namespace Opm
 
         using WellState = WellStateFullyImplicitBlackoil;
 
-        typedef BlackoilModelParameters ModelParameters;
+        typedef BlackoilModelParametersEbos<TypeTag> ModelParameters;
 
         static const int Water = BlackoilPhases::Aqua;
         static const int Oil = BlackoilPhases::Liquid;
@@ -81,13 +81,15 @@ namespace Opm
         typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
         typedef typename GET_PROP_TYPE(TypeTag, IntensiveQuantities) IntensiveQuantities;
         typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-        typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
-        typedef typename GET_PROP_TYPE(TypeTag, Scalar)         Scalar;
+
+        typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix)  Jacobian;
+        typedef typename Jacobian :: block_type JacobianBlockType;
 
         static const int numEq = Indices::numEq;
+        typedef double Scalar;
 
         typedef Dune::FieldVector<Scalar, numEq    > VectorBlockType;
-        typedef typename JacobianMatrix :: block_type   MatrixBlockType;
+        typedef Dune::FieldMatrix<Scalar, numEq, numEq > MatrixBlockType;
         typedef Dune::BCRSMatrix <MatrixBlockType> Mat;
         typedef Dune::BlockVector<VectorBlockType> BVector;
         typedef DenseAd::Evaluation<double, /*size=*/numEq> Eval;
@@ -223,7 +225,7 @@ namespace Opm
         void calculateReservoirRates(WellState& well_state) const;
 
         // Add well contributions to matrix
-        virtual void addWellContributions(JacobianMatrix&) const
+        virtual void addWellContributions(Mat&) const
         {}
 
         void solveWellForTesting(Simulator& ebosSimulator, WellState& well_state, const std::vector<double>& B_avg, bool terminal_output);

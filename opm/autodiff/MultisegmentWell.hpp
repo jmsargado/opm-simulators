@@ -42,7 +42,7 @@ namespace Opm
         using typename Base::MaterialLaw;
         using typename Base::Indices;
         using typename Base::RateConverterType;
-        using typename Base::MatrixBlockType;
+        using typename Base::JacobianBlockType;
 
 
         /// the number of reservior equations
