@@ -15,10 +15,14 @@ EXE_NAME="${9}"
 shift 9
 TEST_ARGS="$@"
 
-rm -Rf  ${RESULT_PATH}
 mkdir -p ${RESULT_PATH}
 cd ${RESULT_PATH}
-${BINPATH}/${EXE_NAME} ${TEST_ARGS} output_dir=${RESULT_PATH}
+if test "${EXE_NAME}" = "flow"; then
+    ${BINPATH}/${EXE_NAME} ${TEST_ARGS} --output-dir=${RESULT_PATH}
+else
+    ${BINPATH}/${EXE_NAME} ${TEST_ARGS} output_dir=${RESULT_PATH}
+fi
+test $? -eq 0 || exit 1
 cd ..
 
 ecode=0
@@ -27,7 +31,7 @@ ${COMPARE_SUMMARY_COMMAND} -r ${RESULT_PATH}/${FILENAME} ${INPUT_DATA_PATH}/opm-
 if [ $? -ne 0 ]
 then
   ecode=1
-  `dirname $0`/analyze_summary_failure.sh ${COMPARE_SUMMARY_COMMAND} -r ${RESULT_PATH}/${FILENAME} ${INPUT_DATA_PATH}/opm-simulation-reference/${EXE_NAME}/${FILENAME} ${ABS_TOL} ${REL_TOL}
+  ${COMPARE_SUMMARY_COMMAND} -a -r ${RESULT_PATH}/${FILENAME} ${INPUT_DATA_PATH}/opm-simulation-reference/${EXE_NAME}/${FILENAME} ${ABS_TOL} ${REL_TOL}
 fi
 
 echo "=== Executing comparison for restart file ==="
@@ -35,7 +39,7 @@ ${COMPARE_ECL_COMMAND}  ${RESULT_PATH}/${FILENAME} ${INPUT_DATA_PATH}/opm-simula
 if [ $? -ne 0 ]
 then
   ecode=1
-  `dirname $0`/analyze_ecl_failure.sh ${COMPARE_ECL_COMMAND} UNRST ${RESULT_PATH}/${FILENAME} ${INPUT_DATA_PATH}/opm-simulation-reference/${EXE_NAME}/${FILENAME} ${ABS_TOL} ${REL_TOL}
+  ${COMPARE_ECL_COMMAND} -a ${RESULT_PATH}/${FILENAME} ${INPUT_DATA_PATH}/opm-simulation-reference/${EXE_NAME}/${FILENAME} ${ABS_TOL} ${REL_TOL}
 fi
 
 echo "=== Executing comparison for init file ==="
@@ -43,7 +47,7 @@ ${COMPARE_ECL_COMMAND} -t INIT ${RESULT_PATH}/${FILENAME} ${INPUT_DATA_PATH}/opm
 if [ $? -ne 0 ]
 then
   ecode=1
-  `dirname $0`/analyze_ecl_failure.sh ${COMPARE_ECL_COMMAND} INIT ${RESULT_PATH}/${FILENAME} ${INPUT_DATA_PATH}/opm-simulation-reference/${EXE_NAME}/${FILENAME} ${ABS_TOL} ${REL_TOL}
+  ${COMPARE_ECL_COMMAND} -a -t INIT ${RESULT_PATH}/${FILENAME} ${INPUT_DATA_PATH}/opm-simulation-reference/${EXE_NAME}/${FILENAME} ${ABS_TOL} ${REL_TOL}
 fi
 
 exit $ecode

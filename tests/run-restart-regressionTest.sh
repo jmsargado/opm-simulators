@@ -29,11 +29,21 @@ then
 else
   CMD_PREFIX=""
 fi
-${CMD_PREFIX} ${BINPATH}/${EXE_NAME} ${TEST_ARGS}.DATA timestep.adaptive=false output_dir=${RESULT_PATH}
+if test "${EXE_NAME}" = "flow"; then
+    ${CMD_PREFIX} ${BINPATH}/${EXE_NAME} ${TEST_ARGS}.DATA --enable-adaptive-time-stepping=false --output-dir=${RESULT_PATH}
+else
+    ${CMD_PREFIX} ${BINPATH}/${EXE_NAME} ${TEST_ARGS}.DATA timestep.adaptive=false output_dir=${RESULT_PATH}
+fi
+
 test $? -eq 0 || exit 1
 
 ${OPM_PACK_COMMAND} -o ${BASE_NAME} ${TEST_ARGS}_RESTART.DATA
-${CMD_PREFIX} ${BINPATH}/${EXE_NAME} ${BASE_NAME} timestep.adaptive=false output_dir=${RESULT_PATH}
+
+if test "${EXE_NAME}" = "flow"; then
+    ${CMD_PREFIX} ${BINPATH}/${EXE_NAME} ${BASE_NAME} --enable-adaptive-time-stepping=false --output-dir=${RESULT_PATH}
+else
+    ${CMD_PREFIX} ${BINPATH}/${EXE_NAME} ${BASE_NAME} timestep.adaptive=false output_dir=${RESULT_PATH}
+fi
 test $? -eq 0 || exit 1
 
 ecode=0
@@ -42,7 +52,7 @@ ${COMPARE_SUMMARY_COMMAND} -R ${RESULT_PATH}/${FILENAME} ${RESULT_PATH}/${FILENA
 if [ $? -ne 0 ]
 then
   ecode=1
-  `dirname $0`/analyze_summary_failure.sh ${COMPARE_SUMMARY_COMMAND} -R ${RESULT_PATH}/${FILENAME} ${RESULT_PATH}/${FILENAME}_RESTART ${ABS_TOL} ${REL_TOL}
+  ${COMPARE_SUMMARY_COMMAND} -a -R ${RESULT_PATH}/${FILENAME} ${RESULT_PATH}/${FILENAME}_RESTART ${ABS_TOL} ${REL_TOL}
 fi
 
 echo "=== Executing comparison for restart file ==="
@@ -50,7 +60,7 @@ ${COMPARE_ECL_COMMAND} -l ${RESULT_PATH}/${FILENAME} ${RESULT_PATH}/${FILENAME}_
 if [ $? -ne 0 ]
 then
   ecode=1
-  `dirname $0`/analyze_ecl_failure.sh ${COMPARE_ECL_COMMAND} UNRST ${RESULT_PATH}/${FILENAME} ${RESULT_PATH}/${FILENAME}_RESTART ${ABS_TOL} ${REL_TOL}
+  ${COMPARE_ECL_COMMAND} -a -l ${RESULT_PATH}/${FILENAME} ${RESULT_PATH}/${FILENAME}_RESTART ${ABS_TOL} ${REL_TOL}
 fi
 
 exit $ecode
