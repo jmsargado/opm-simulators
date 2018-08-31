@@ -2209,6 +2209,30 @@ namespace Opm
         }
     }
 
+
+    namespace Detail
+    {
+        //! calculates ret = A^T * B
+        template< class K, int m, int n, int p >
+        static inline void negativeMultMatrixTransposed ( const Dune::FieldMatrix< K, n, m > &A,
+                                                          const Dune::FieldMatrix< K, n, p > &B,
+                                                          Dune::FieldMatrix< K, m, p > &ret )
+        {
+            typedef typename Dune::FieldMatrix< K, m, p > :: size_type size_type;
+
+            for( size_type i = 0; i < m; ++i )
+            {
+                for( size_type j = 0; j < p; ++j )
+                {
+                    ret[ i ][ j ] = K( 0 );
+                    for( size_type k = 0; k < n; ++k )
+                        ret[ i ][ j ] -= A[ k ][ i ] * B[ k ][ j ];
+                }
+            }
+        }
+    }
+
+
     template<typename TypeTag>
     void
     StandardWell<TypeTag>::addWellContributions(Jacobian& jacobian) const
@@ -2225,7 +2249,7 @@ namespace Opm
         {
             const auto row_index = colC.index();
 
-            //auto& row = mat[row_index];
+            //auto& row = jacobian.matrix()[row_index];
             //auto col = row.begin();
 
             for ( auto colB = duneB_[0].begin(), endB = duneB_[0].end(); colB != endB; ++colB )
@@ -2236,8 +2260,8 @@ namespace Opm
                 //assert(col != row.end() && col.index() == col_index);
 
                 Dune::FMatrixHelp::multMatrix(invDuneD_[0][0],  (*colB), tmp);
-                Detail::multMatrixTransposed((*colC), tmp, tmp1);
-                tmp1 *= -1.0;
+                Detail::negativeMultMatrixTransposed((*colC), tmp, tmp1);
+                //tmp1 *= -1.0;
                 jacobian.addBlock( row_index, col_index, tmp1 );
                 //(*col) -= tmp1;
             }

@@ -287,16 +287,16 @@ namespace Opm {
                 BVector x(nc);
 
                 try {
-                    //solveJacobianSystemEbos(x);
-                    solveJacobianSystem(x);
+                    solveJacobianSystemEbos(x);
+                    //solveJacobianSystem(x);
                     report.linear_solve_time += perfTimer.stop();
-                    report.total_linear_iterations += linearIterationsLastSolve();
-                    //report.total_linear_iterations += linearIterationsLastSolveEbos();
+                    //report.total_linear_iterations += linearIterationsLastSolve();
+                    report.total_linear_iterations += linearIterationsLastSolveEbos();
                 }
                 catch (...) {
                     report.linear_solve_time += perfTimer.stop();
-                    report.total_linear_iterations += linearIterationsLastSolve();
-                    //report.total_linear_iterations += linearIterationsLastSolveEbos();
+                    //report.total_linear_iterations += linearIterationsLastSolve();
+                    report.total_linear_iterations += linearIterationsLastSolveEbos();
 
                     failureReport_ += report;
                     throw; // re-throw up
