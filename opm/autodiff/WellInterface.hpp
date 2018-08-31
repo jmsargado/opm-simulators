@@ -225,7 +225,7 @@ namespace Opm
         void calculateReservoirRates(WellState& well_state) const;
 
         // Add well contributions to matrix
-        virtual void addWellContributions(Mat&) const
+        virtual void addWellContributions(Jacobian&) const
         {}
 
         void solveWellForTesting(Simulator& ebosSimulator, WellState& well_state, const std::vector<double>& B_avg, bool terminal_output);

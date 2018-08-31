@@ -40,6 +40,8 @@
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/paamg/amg.hh>
 
+#include <ewoms/linear/matrixblock.hh>
+
 #include <opm/common/utility/platform_dependent/reenable_warnings.h>
 
 namespace Opm
