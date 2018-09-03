@@ -91,9 +91,18 @@ namespace Detail
     class ISTLSolverEbos : public NewtonIterationBlackoilInterface
     {
         typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-        typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) :: Matrix  Matrix;
-        typedef typename GET_PROP_TYPE(TypeTag, GlobalEqVector) Vector;
+public:
         typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+        static const int numEq = Indices::numEq;
+#if USE_DUNE_FEM_PETSC_SOLVERS
+        typedef Dune::MatrixBlock< Scalar, numEq, numEq> Block;
+        typedef Ewoms::Linear::ISTLMatrixBackend< Block > MatrixBackend;
+        typedef typename MatrixBackend :: Matrix Matrix;
+#else
+        typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) :: Matrix  Matrix;
+#endif
+
+        typedef typename GET_PROP_TYPE(TypeTag, GlobalEqVector) Vector;
 
         enum { pressureIndex = Indices::pressureSwitchIdx };
 

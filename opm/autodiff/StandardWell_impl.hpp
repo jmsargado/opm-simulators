@@ -2213,13 +2213,23 @@ namespace Opm
     namespace Detail
     {
         //! calculates ret = A^T * B
-        template< class K, int m, int n, int p >
-        static inline void negativeMultMatrixTransposed ( const Dune::FieldMatrix< K, n, m > &A,
-                                                          const Dune::FieldMatrix< K, n, p > &B,
-                                                          Dune::FieldMatrix< K, m, p > &ret )
+        template< class TA, class TB, class TC >
+        //static inline void negativeMultMatrixTransposed ( const Dune::FieldMatrix< K, n, m > &A,
+        //                                                  const Dune::FieldMatrix< K, n, p > &B,
+        //                                                  Dune::FieldMatrix< K, m, p > &ret )
+        static inline void negativeMultMatrixTransposed ( const TA &A, // n x m
+                                                          const TB &B, // n x p
+                                                          TC &ret )    // m x p
         {
-            typedef typename Dune::FieldMatrix< K, m, p > :: size_type size_type;
+            typedef typename TA :: size_type size_type;
+            typedef typename TA :: field_type K;
+            assert( A.rows() == B.rows() );
+            assert( A.cols() == ret.rows() );
+            assert( B.cols() == ret.cols() );
 
+            const size_type n = A.rows;
+            const size_type m = ret.rows;
+            const size_type p = B.cols;
             for( size_type i = 0; i < m; ++i )
             {
                 for( size_type j = 0; j < p; ++j )

@@ -71,7 +71,7 @@ SET_INT_PROP(FlowModelParameters, MaxStrictIter, 8);
 SET_BOOL_PROP(FlowModelParameters, SolveWelleqInitially, true);
 SET_BOOL_PROP(FlowModelParameters, UpdateEquationsScaling, false);
 SET_BOOL_PROP(FlowModelParameters, UseUpdateStabilization, true);
-SET_BOOL_PROP(FlowModelParameters, MatrixAddWellContributions, false);
+SET_BOOL_PROP(FlowModelParameters, MatrixAddWellContributions, true);
 SET_BOOL_PROP(FlowModelParameters, PreconditionerAddWellContributions, false);
 SET_SCALAR_PROP(FlowModelParameters, TolerancePressureMsWells, 0.01 *1e5);
 SET_SCALAR_PROP(FlowModelParameters, MaxPressureChangeMsWells, 2.0 *1e5);

@@ -547,7 +547,7 @@ namespace Opm {
         void solveJacobianSystemEbos(BVector& x)
         {
             const auto& ebosJac = ebosSimulator_.model().linearizer().jacobian();
-            auto& b = ebosSimulator_.model().linearizer().residual();
+            auto& ebosResid = ebosSimulator_.model().linearizer().residual();
 
             // J = [A, B; C, D], where A is the reservoir equations, B and C the interaction of well
             // with the reservoir and D is the wells itself.
@@ -559,16 +559,16 @@ namespace Opm {
             // r -= B^T * D^-1 r_well
 
             // apply well residual to the residual.
-            // wellModel().apply(ebosResid);
+            wellModel().apply(ebosResid);
             // the wells must be added
             assert( param_.matrix_add_well_contributions_ );
 
             // set initial guess
-            // x = 0.0;
+            x = 0.0;
 
             //const Mat& M = matrix_for_preconditioner_ ? *matrix_for_preconditioner_.get() : ebosJac;
             const auto& M = ebosJac; //matrix_for_preconditioner_ ? *matrix_for_preconditioner_.get() : ebosJac;
-            linearSolver_.prepareRhs(M, b);
+            linearSolver_.prepareRhs(M, ebosResid);
             linearSolver_.prepareMatrix(M);
             bool converged = linearSolver_.solve(x);
 
