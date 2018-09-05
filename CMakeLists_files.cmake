@@ -223,12 +223,12 @@ list (APPEND TEST_DATA_FILES
 # find tutorials examples -name '*.c*' -printf '\t%p\n' | sort
 list (APPEND EXAMPLE_SOURCE_FILES
   examples/find_zero.cpp
-  examples/flow_legacy.cpp
-  examples/flow_reorder.cpp
-  examples/flow_sequential.cpp
+  #examples/flow_legacy.cpp
+  #examples/flow_reorder.cpp
+  #examples/flow_sequential.cpp
   examples/flow.cpp
   examples/flow_fempetsc.cpp
-  examples/flow_femistl.cpp
+  #examples/flow_femistl.cpp
   examples/sim_2p_incomp_ad.cpp
   examples/sim_2p_comp_reorder.cpp
   examples/sim_simple.cpp
