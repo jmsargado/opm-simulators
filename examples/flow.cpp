@@ -20,10 +20,12 @@
 */
 #include "config.h"
 
-#if HAVE_DUNE_FEM
-//#define USE_DUNE_FEM_SOLVERS 1
+#if HAVE_DUNE_FEM && HAVE_PETSC
+#if FLOW_USE_DUNE_FEM_PETSC
+#define USE_DUNE_FEM_SOLVERS 1
+#define USE_DUNE_FEM_PETSC_SOLVERS 1
 //#define USE_DUNE_FEM_ISTL_SOLVERS 1
-//#define USE_DUNE_FEM_PETSC_SOLVERS 1
+#endif
 #endif
 
 #include <opm/simulators/flow_ebos_blackoil.hpp>

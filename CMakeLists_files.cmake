@@ -227,6 +227,7 @@ list (APPEND EXAMPLE_SOURCE_FILES
   examples/flow_reorder.cpp
   examples/flow_sequential.cpp
   examples/flow.cpp
+  examples/flow_fempetsc.cpp
   examples/sim_2p_incomp_ad.cpp
   examples/sim_2p_comp_reorder.cpp
   examples/sim_simple.cpp
