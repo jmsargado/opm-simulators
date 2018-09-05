@@ -287,17 +287,22 @@ namespace Opm {
                 BVector x(nc);
 
                 try {
-                    //solveJacobianSystemEbos(x);
+#ifdef USE_DUNE_FEM_SOLVERS
+                    solveJacobianSystemEbos(x);
+                    report.total_linear_iterations += linearIterationsLastSolveEbos();
+#else
                     solveJacobianSystem(x);
-                    report.linear_solve_time += perfTimer.stop();
                     report.total_linear_iterations += linearIterationsLastSolve();
-                    //report.total_linear_iterations += linearIterationsLastSolveEbos();
+#endif
+                    report.linear_solve_time += perfTimer.stop();
                 }
                 catch (...) {
                     report.linear_solve_time += perfTimer.stop();
+#ifdef USE_DUNE_FEM_SOLVERS
+                    report.total_linear_iterations += linearIterationsLastSolveEbos();
+#else
                     report.total_linear_iterations += linearIterationsLastSolve();
-                    //report.total_linear_iterations += linearIterationsLastSolveEbos();
-
+#endif
                     failureReport_ += report;
                     throw; // re-throw up
                 }
