@@ -129,9 +129,9 @@ list (APPEND MAIN_SOURCE_FILES
   opm/simulators/timestepping/SimulatorTimer.cpp
   )
 
-if(PETSc_FOUND)
-  list(APPEND MAIN_SOURCE_FILES opm/core/linalg/LinearSolverPetsc.cpp)
-endif()
+#if(PETSc_FOUND)
+#  list(APPEND MAIN_SOURCE_FILES opm/core/linalg/LinearSolverPetsc.cpp)
+#endif()
 
 
 # originally generated with the command:
@@ -229,6 +229,7 @@ list (APPEND EXAMPLE_SOURCE_FILES
   #examples/flow_femistl.cpp
 
   examples/flow.cpp
+  examples/flow_amgxpetsc.cpp
   examples/flow_fempetsc.cpp
   examples/sim_2p_incomp_ad.cpp
   examples/sim_2p_comp_reorder.cpp
