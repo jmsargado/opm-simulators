@@ -639,7 +639,21 @@ namespace Opm {
 
           virtual void apply( const X& x, Y& y ) const
           {
-            A_.mv( x, y );
+            const size_t nRows = A_.N();
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+            for( size_t i = 0; i<nRows; ++i )
+            {
+              const auto& row = A_[ i ];
+
+              y[ i ] = 0;
+              const auto endj = row.end();
+              for (auto j=row.begin(); j!=endj; ++j)
+              {
+                (*j).umv( x[ j.index() ], y[ i ]);
+              }
+            }
 
             // add well model modification to y
             wellMod_.apply(x, y );
@@ -653,7 +667,20 @@ namespace Opm {
           // y += \alpha * A * x
           virtual void applyscaleadd (field_type alpha, const X& x, Y& y) const
           {
-            A_.usmv(alpha,x,y);
+            const size_t nRows = A_.N();
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+            for( size_t i = 0; i<nRows; ++i )
+            {
+              const auto& row = A_[ i ];
+
+              const auto endj = row.end();
+              for (auto j=row.begin(); j!=endj; ++j)
+              {
+                (*j).usmv(alpha, x[ j.index() ], y[ i ]);
+              }
+            }
 
             // add scaled well model modification to y
             wellMod_.applyScaleAdd( alpha, x, y );
